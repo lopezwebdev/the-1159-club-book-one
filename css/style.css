@@ -325,7 +325,11 @@ body::after {
   position: relative;
   z-index: 10;
   overflow: hidden;
-  background: var(--cover-dark-bg);
+  background-color: var(--cover-dark-bg);
+  background-image: url('Last%20Train%20to%20Nowhere%20Cover%202.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
 }
 
 .cover-image-container {
