@@ -775,6 +775,69 @@
   });
 
   /* ===========================================================
+     VISITOR & PASSENGER TRACKING ENGINE
+     =========================================================== */
+  async function initVisitorTracker() {
+    const countEl = document.getElementById('visitorCountVal');
+    if (!countEl) return;
+
+    const STORAGE_KEY_TOTAL = 'the1159_visitor_count';
+    const SESSION_KEY = 'the1159_session_counted';
+    
+    // Display cached local count immediately if available
+    let cachedCount = parseInt(localStorage.getItem(STORAGE_KEY_TOTAL) || '1', 10);
+    countEl.textContent = cachedCount.toLocaleString();
+
+    const isSessionCounted = sessionStorage.getItem(SESSION_KEY);
+    const namespace = 'the-1159-club-book-one';
+    const key = 'passengers';
+
+    // Primary & secondary counter endpoints
+    const endpoint = isSessionCounted
+      ? `https://abacus.jasoncameron.dev/get/${namespace}/${key}`
+      : `https://abacus.jasoncameron.dev/hit/${namespace}/${key}`;
+
+    const fallbackEndpoint = isSessionCounted
+      ? `https://countapi.mileshilliard.com/api/v1/get/${namespace}`
+      : `https://countapi.mileshilliard.com/api/v1/hit/${namespace}`;
+
+    const tryFetchCount = async (url) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const val = data.value || data.count;
+      return typeof val === 'number' ? val : (parseInt(val, 10) || null);
+    };
+
+    try {
+      let serverCount = await tryFetchCount(endpoint);
+      if (!serverCount) {
+        serverCount = await tryFetchCount(fallbackEndpoint);
+      }
+
+      if (serverCount && serverCount > 0) {
+        localStorage.setItem(STORAGE_KEY_TOTAL, serverCount.toString());
+        sessionStorage.setItem(SESSION_KEY, 'true');
+        countEl.textContent = serverCount.toLocaleString();
+        return;
+      }
+    } catch (err) {
+      console.log('Visitor API note: Using local counter fallback.', err.message || err);
+    }
+
+    // Fallback counter increment for offline / network issues
+    if (!isSessionCounted) {
+      cachedCount += 1;
+      localStorage.setItem(STORAGE_KEY_TOTAL, cachedCount.toString());
+      sessionStorage.setItem(SESSION_KEY, 'true');
+      countEl.textContent = cachedCount.toLocaleString();
+    }
+  }
+
+  /* ===========================================================
      INITIALIZATION & EVENT LISTENERS
      =========================================================== */
   document.addEventListener('DOMContentLoaded', () => {
@@ -794,6 +857,7 @@
       };
     }
 
+    initVisitorTracker();
     renderStart();
   });
 

@@ -210,6 +210,26 @@ body::after {
   fill: currentColor;
 }
 
+.visitor-badge {
+  background: rgba(35, 127, 112, 0.09);
+  border-color: rgba(35, 127, 112, 0.35);
+  color: var(--teal);
+  cursor: default;
+  user-select: none;
+}
+
+.visitor-badge:hover {
+  background: rgba(35, 127, 112, 0.15);
+  border-color: var(--teal);
+  color: var(--teal);
+}
+
+.visitor-badge strong {
+  font-weight: 700;
+  color: var(--rust);
+  letter-spacing: 0.04em;
+}
+
 /* Centered Portrait Reading Window */
 .board {
   background-color: var(--page-bg);
