@@ -51,7 +51,7 @@ body {
   padding: 0;
   min-height: 100vh;
   background-color: #08090c;
-  background-image: url('Last%20Train%20to%20Nowhere%20Cover%202.png');
+  background-image: url('../Last%20Train%20to%20Nowhere%20Cover%202.png');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -316,7 +316,7 @@ body::after {
   transform-origin: left;
 }
 
-/* Cover 1 Opening Screen: Cover image fills the view window with buttons overlaying at the bottom */
+/* Standalone Cover 1 Opening Screen inside Centered View Box */
 .cover-screen {
   display: flex;
   flex-direction: column;
@@ -325,11 +325,7 @@ body::after {
   position: relative;
   z-index: 10;
   overflow: hidden;
-  background-color: var(--cover-dark-bg);
-  background-image: url('../Last%20Train%20to%20Nowhere%20Cover%202.png');
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
+  background: var(--cover-dark-bg);
 }
 
 .cover-image-container {
