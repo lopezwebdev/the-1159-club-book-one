@@ -96,26 +96,77 @@
   }
 
   /* ===========================================================
-     HAPTIC VIBRATION ENGINE (HTML5 Web Vibration API)
+     HAPTIC & TAPTIC ENGINE (Android Vibrate + iOS Web Audio Taptics)
      =========================================================== */
+  let audioCtx = null;
+  function playTapticPulse(frequency = 70, duration = 0.05, volume = 0.35) {
+    if (isMuted) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!audioCtx) audioCtx = new AudioCtx();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(15, audioCtx.currentTime + duration);
+      gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    } catch (e) {}
+  }
+
   function triggerHaptic(patternType) {
-    if (!('vibrate' in navigator)) return;
+    // 1. Hardware Motor Vibration (Android / Supported Devices)
+    if ('vibrate' in navigator) {
+      try {
+        switch (patternType) {
+          case 'tap':
+            navigator.vibrate(30);
+            break;
+          case 'stab':
+            navigator.vibrate([70, 40, 120]);
+            break;
+          case 'timer':
+            navigator.vibrate([40, 100, 40, 100, 60]);
+            break;
+          case 'ending-good':
+            navigator.vibrate([100, 50, 150]);
+            break;
+          case 'ending-bad':
+            navigator.vibrate([150, 60, 200, 60, 350]);
+            break;
+        }
+      } catch (e) {}
+    }
+
+    // 2. iOS Safari Web Audio Taptic Pulse Fallback
     try {
       switch (patternType) {
         case 'tap':
-          navigator.vibrate(30);
+          playTapticPulse(80, 0.03, 0.25);
           break;
         case 'stab':
-          navigator.vibrate([70, 40, 120]);
+          playTapticPulse(50, 0.12, 0.5);
+          setTimeout(() => playTapticPulse(40, 0.15, 0.6), 80);
           break;
         case 'timer':
-          navigator.vibrate([40, 100, 40, 100, 60]);
+          playTapticPulse(60, 0.05, 0.3);
+          setTimeout(() => playTapticPulse(60, 0.05, 0.3), 120);
           break;
         case 'ending-good':
-          navigator.vibrate([100, 50, 150]);
+          playTapticPulse(110, 0.08, 0.35);
+          setTimeout(() => playTapticPulse(140, 0.1, 0.35), 90);
           break;
         case 'ending-bad':
-          navigator.vibrate([150, 60, 200, 60, 350]);
+          playTapticPulse(45, 0.18, 0.55);
+          setTimeout(() => playTapticPulse(35, 0.22, 0.65), 100);
           break;
       }
     } catch (e) {}
