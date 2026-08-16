@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The 11:59 Club — The Last Train to Nowhere</title>
+<style>
+  :root{
+    --void:#0b0c10;
+    --panel:#14161d;
+    --panel-edge:#1f222c;
+    --paper:#e7e3da;
+    --dim:#8b8d97;
+    --amber:#e8a33d;
+    --amber-dim:#7a5a24;
+    --teal:#5fd4c1;
+    --rust:#b3452f;
+    --font-body: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+    --font-sign: 'Arial Narrow', Arial, sans-serif;
+    --font-mono: 'Courier New', Courier, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--void);
+    color:var(--paper);
+    font-family:var(--font-body);
+    overflow-x:hidden;
+  }
+  body{
+    display:flex; align-items:center; justify-content:center;
+    min-height:100vh;
+    padding:24px 16px;
+    position:relative;
+  }
+  /* subtle scanline + vignette texture */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background:
+      repeating-linear-gradient(180deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px),
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 100%);
+    pointer-events:none;
+    z-index:1;
+  }
+  .stage{
+    position:relative; z-index:2;
+    width:100%; max-width:620px;
+  }
+  .board{
+    background:var(--panel);
+    border:1px solid var(--panel-edge);
+    border-radius:2px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.6);
+    overflow:hidden;
+  }
+  .board.glitch{ animation: glitchShake 0.28s steps(2,end) 2; }
+  @keyframes glitchShake{
+    0%{transform:translate(0,0);}
+    25%{transform:translate(-2px,1px);}
+    50%{transform:translate(2px,-1px);}
+    75%{transform:translate(-1px,0);}
+    100%{transform:translate(0,0);}
+  }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px;
+    border-bottom:1px solid var(--panel-edge);
+    font-family:var(--font-sign);
+    letter-spacing:0.14em;
+    font-size:11px;
+    color:var(--dim);
+    text-transform:uppercase;
+  }
+  .topbar .title{ color:var(--amber); font-weight:bold; }
+  .progress{
+    display:flex; gap:5px; align-items:center;
+  }
+  .dot{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--panel-edge);
+    transition:background 0.3s;
+  }
+  .dot.on{ background:var(--amber); box-shadow:0 0 6px var(--amber); }
+
+  .timerwrap{
+    padding:0;
+    height:3px;
+    background:var(--panel-edge);
+    overflow:hidden;
+  }
+  .timerbar{
+    height:100%;
+    background:var(--rust);
+    width:100%;
+    transform-origin:left;
+  }
+
+  .scene{
+    padding:32px 26px 26px;
+  }
+  .scene p{
+    margin:0 0 16px;
+    line-height:1.65;
+    font-size:17px;
+    color:var(--paper);
+  }
+  .scene p:last-of-type{ margin-bottom:0; }
+  .scene b{ color:var(--amber); font-weight:normal; }
+  .scene i{ color:var(--teal); font-style:italic; }
+  .speaker{
+    font-family:var(--font-sign);
+    letter-spacing:0.08em;
+    color:var(--teal);
+    font-size:13px;
+    text-transform:uppercase;
+  }
+  .clock-flash{
+    font-family:var(--font-mono);
+    font-size:15px;
+    color:var(--rust);
+    letter-spacing:0.05em;
+  }
+
+  .choices{
+    border-top:1px solid var(--panel-edge);
+  }
+  .choice{
+    display:block; width:100%;
+    text-align:left;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid var(--panel-edge);
+    color:var(--paper);
+    font-family:var(--font-body);
+    font-size:16px;
+    padding:16px 26px;
+    cursor:pointer;
+    position:relative;
+    transition:background 0.15s, padding-left 0.15s;
+  }
+  .choice:last-child{ border-bottom:none; }
+  .choice::before{
+    content:"›";
+    color:var(--amber);
+    margin-right:10px;
+    font-family:var(--font-sign);
+  }
+  .choice:hover, .choice:focus-visible{
+    background:rgba(232,163,61,0.07);
+    padding-left:32px;
+    outline:none;
+  }
+  .choice:focus-visible{ box-shadow:inset 3px 0 0 var(--amber); }
+
+  .startwrap, .endwrap{ padding:34px 26px; text-align:center; }
+  .brand-eyebrow{
+    font-family:var(--font-sign);
+    letter-spacing:0.22em;
+    font-size:12px;
+    color:var(--teal);
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .brand-title{
+    font-family:var(--font-sign);
+    font-size:30px;
+    letter-spacing:0.06em;
+    color:var(--paper);
+    text-transform:uppercase;
+    margin:0 0 4px;
+  }
+  .brand-sub{
+    font-family:var(--font-body);
+    font-style:italic;
+    color:var(--dim);
+    margin:0 0 26px;
+    font-size:15px;
+  }
+  .nameinput{
+    width:100%;
+    background:var(--void);
+    border:1px solid var(--panel-edge);
+    color:var(--paper);
+    font-family:var(--font-mono);
+    font-size:16px;
+    padding:12px 14px;
+    margin-bottom:16px;
+    text-align:center;
+    letter-spacing:0.05em;
+  }
+  .nameinput:focus{ outline:none; border-color:var(--amber); }
+  .go-btn{
+    background:var(--amber);
+    color:var(--void);
+    border:none;
+    font-family:var(--font-sign);
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    font-size:14px;
+    padding:13px 28px;
+    cursor:pointer;
+  }
+  .go-btn:hover{ background:#f3b558; }
+
+  .end-tag{
+    font-family:var(--font-sign);
+    letter-spacing:0.15em;
+    color:var(--rust);
+    text-transform:uppercase;
+    font-size:12px;
+    margin-top:22px;
+    margin-bottom:18px;
+  }
+  .end-tag.good{ color:var(--teal); }
+  .actionrow{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .ghost-btn{
+    background:transparent;
+    border:1px solid var(--panel-edge);
+    color:var(--dim);
+    font-family:var(--font-sign);
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    font-size:12px;
+    padding:10px 16px;
+    cursor:pointer;
+  }
+  .ghost-btn:hover{ color:var(--paper); border-color:var(--amber); }
+
+  .footer-note{
+    text-align:center;
+    font-family:var(--font-sign);
+    font-size:10px;
+    letter-spacing:0.12em;
+    color:#4a4c56;
+    text-transform:uppercase;
+    margin-top:14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="board" id="board">
+    <!-- rendered by JS -->
+  </div>
+  <div class="footer-note">The 11:59 Club — Book One — A Choose-Your-Scare Adventure</div>
+</div>
+
+<audio id="audioLoop" loop></audio>
+<audio id="audioStab"></audio>
+
+<script>
+/* ===========================================================
+   AUDIO HOOKS
+   Drop your files at /audio/loops/<key>.mp3 and /audio/stabs/<key>.mp3
+   The engine calls these by key name — no code changes needed.
+   =========================================================== */
+const AUDIO_LOOPS = {
+  lastCar:     '/audio/loops/lastCar.mp3',
+  platform:    '/audio/loops/platform.mp3',
+  stationHall: '/audio/loops/stationHall.mp3',
+  trainArrival:'/audio/loops/trainArrival.mp3',
+  alarmRise:   '/audio/loops/alarmRise.mp3',
+};
+const AUDIO_STABS = {
+  boothReveal: '/audio/stabs/boothReveal.mp3',
+  mapGlitch:   '/audio/stabs/mapGlitch.mp3',
+  alarmHit:    '/audio/stabs/alarmHit.mp3',
+};
+
+const loopEl = document.getElementById('audioLoop');
+const stabEl = document.getElementById('audioStab');
+let currentLoopKey = null;
+
+function playLoop(key){
+  if(!key){ fadeOutLoop(); return; }
+  if(key === currentLoopKey) return;
+  currentLoopKey = key;
+  const src = AUDIO_LOOPS[key];
+  if(!src) return;
+  try{
+    loopEl.src = src;
+    loopEl.volume = 0.55;
+    loopEl.play().catch(()=>{ /* file not present yet — silent no-op */ });
+  }catch(e){ /* silent no-op until audio files are supplied */ }
+}
+function fadeOutLoop(){
+  currentLoopKey = null;
+  try{ loopEl.pause(); }catch(e){}
+}
+function playStab(key){
+  const src = AUDIO_STABS[key];
+  if(!src) return;
+  try{
+    stabEl.src = src;
+    stabEl.volume = 0.85;
+    stabEl.currentTime = 0;
+    stabEl.play().catch(()=>{});
+  }catch(e){}
+  // visual glitch always fires even if audio file isn't present yet
+  const board = document.getElementById('board');
+  board.classList.remove('glitch'); void board.offsetWidth;
+  board.classList.add('glitch');
+}
+function cutSilence(){
+  fadeOutLoop();
+}
+
+/* ===========================================================
+   STATE
+   =========================================================== */
+const state = {
+  playerName: '',
+  flags: {
+    keptPromise: null,
+    hasItem: false,
+    helpedMara: null,
+    sawTell: null,
+    examinedNote: false,
+    boothTried: false,
+  },
+  counters: { mapLoop: 0, stairLoop: 0, missedWindow: 0 },
+  checkpoint: 'G1',
+  currentId: 'START',
+  spineVisited: new Set(),
+};
+const SPINE_ORDER = ['G1','G2','G3','G4','G5','G6','G7','G8','G9','G10','G11','G12','G13','G14','G15'];
+const CHECKPOINTS = ['G1','G3','G7','G11'];
+
+/* ===========================================================
+   SCENE DATA
+   =========================================================== */
+const S = {}; // populated below
+
+S.G1 = {
+  id:'G1', checkpoint:true, audioLoop:'lastCar',
+  text:`The train is almost empty. Just you, a sleeping salaryman two seats down, and the hum of wheels on track.<br><br>Your phone buzzes.<br><br><span class="speaker">Kenji:</span> <i>did you seriously just leave? i needed to talk to you</i><br><br>You stare at it a second too long. You told him you'd stay after practice. You didn't.`,
+  choices:[
+    { label:"Text him back and explain.", next:'G2', setFlag:{keptPromise:true} },
+    { label:"Ghost him. You'll deal with it tomorrow.", next:'G2', setFlag:{keptPromise:false} },
+  ]
+};
+
+S.G2 = {
+  id:'G2', audioLoop:'lastCar',
+  timer:{ seconds:10, defaultNext:'G3', forgiving:true },
+  text:`<i>"Next stop —"</i> the speaker crackles, garbled. You don't catch the name.<br><br>The doors chime. You weren't even paying attention to which stop this was supposed to be.`,
+  choices:[
+    { label:"Jump off now, before the doors seal shut.", next:'G3' },
+    { label:"Stay seated — you'll catch the next one back.", next:'B1' },
+  ]
+};
+
+S.B1 = {
+  id:'B1', audioLoop:'lastCar',
+  text:`Fine. No big deal. You'll just get off at the next stop instead.<br><br>The train rattles on. One minute. Two. The lights flicker once, and outside the window there's nothing — no platforms, no tunnel walls, just dark.<br><br>The speaker crackles again. Same garbled voice. <i>"Next stop —"</i><br><br>The doors open onto the exact same platform. Same flickering light. Same hum from a vending machine down the way.`,
+  onEnter: (st)=>{ st.counters.missedWindow++; },
+  choicesFn: (st)=>{
+    if(st.counters.missedWindow >= 2){
+      return [{ label:"Stay seated again.", next:'E7' }];
+    }
+    return [
+      { label:"Get off here, for real this time.", next:'G3' },
+      { label:"Stay seated again and see what happens.", next:'B1' },
+    ];
+  }
+};
+
+S.G3 = {
+  id:'G3', checkpoint:true, audioLoop:'platform',
+  text:`The train pulls away, and the platform goes quiet in a way platforms aren't supposed to be quiet.<br><br>No one else got off. Not the salaryman. Not the two girls who were laughing by the doors a minute ago. Just you.<br><br>The overhead light nearest you flickers. Down the platform, a vending machine glows — the only steady light in the whole station.`,
+  choices:[
+    { label:"Go look at the vending machine.", next:'G4' },
+    { label:"Head straight for the stairs and get out of here.", next:'B2' },
+  ]
+};
+
+S.B2 = {
+  id:'B2', audioLoop:'platform',
+  text:`You take the stairs two at a time, glad to be moving.<br><br>The stairs turn. Then turn again. Then a third time — you're fairly sure staircases aren't supposed to have this many turns for one flight.<br><br>You come out onto the same platform you just left. Same flicker. Same hum.`,
+  choices:[
+    { label:"Actually check out that vending machine this time.", next:'G4' },
+  ]
+};
+
+S.G4 = {
+  id:'G4', audioLoop:'platform',
+  text:`The machine is stocked with drinks and snacks you don't recognize — brands with no logos, wrappers a little too shiny. One item near the bottom row glows faintly, like it's lit from the inside.<br><br>There's no coin slot. No card reader. Just a button.`,
+  choices:[
+    { label:"Press it. Take the item.", next:'G5', setFlag:{hasItem:true} },
+    { label:"Leave it. This feels like a trade you don't want to make.", next:'G5', setFlag:{hasItem:false} },
+  ]
+};
+
+S.G5 = {
+  id:'G5', audioLoop:'platform',
+  text:`A girl about your age is sitting alone on a bench near the stairs, like she's been waiting for exactly you. She doesn't look scared. She looks <i>tired</i>.<br><br><span class="speaker">Rin:</span> "You already got off this train once."<br><br>You don't know what that means. You don't know her. But she's the only other person in this entire station.`,
+  choices:[
+    { label:"Ask her what she means.", next:'B3' },
+    { label:"Ask her how to get out of here.", next:'G6' },
+  ]
+};
+
+S.B3 = {
+  id:'B3', audioLoop:'platform',
+  text:`"What do you mean I already got off this train once? I've never even <i>been</i> here—"`,
+  choices:[
+    { label:"Push harder. She knows something and you want it now.", next:'E6' },
+    { label:"Back off — she clearly doesn't want to explain yet.", next:'G6' },
+  ]
+};
+
+S.G6 = {
+  id:'G6', audioLoop:'platform',
+  text:`Rin doesn't really answer either question directly.<br><br><span class="speaker">Rin:</span> "There's a way out. It's not the stairs. It's not the way you think." She points down two hallways — one dim but lit, one completely dark. "Go that way. Don't look at the map on the wall. Don't trust it."`,
+  choices:[
+    { label:"Follow her directions down the lit hallway.", next:'G7' },
+    { label:"Check the station map first, just to be sure.", next:'B4' },
+  ]
+};
+
+S.B4 = {
+  id:'B4', audioLoop:'stationHall', audioStab:'mapGlitch',
+  text:`The map is bolted to the wall, laminated, official-looking. <b>YOU ARE HERE</b>, it says, with a little red dot.<br><br>You look at the exits. Blink. Look again.<br><br>The exits have moved.`,
+  onEnter:(st)=>{ st.counters.mapLoop++; },
+  choicesFn:(st)=>{
+    if(st.counters.mapLoop >= 2){
+      return [{ label:"Look one more time, just to be sure.", next:'E4' }];
+    }
+    return [
+      { label:"Look one more time, just to be sure.", next:'B4' },
+      { label:"Stop looking at it and go find Rin instead.", next:'G7' },
+    ];
+  }
+};
+
+S.G7 = {
+  id:'G7', checkpoint:true, audioLoop:'stationHall',
+  text:`Halfway down the hall sits a stopped train car, dark inside except for one dim light. Painted on the side: <b>CONDUCTOR — DO NOT ENTER</b>.<br><br>The door is locked. From the <i>outside</i>.<br><br>Something inside shifts. Slowly. Like it heard you.`,
+  choices:[
+    { label:"Try the door anyway.", next:'B5' },
+    { label:"Keep walking. Whatever's in there can wait.", next:'G8' },
+  ]
+};
+
+S.B5 = {
+  id:'B5', audioLoop:'stationHall',
+  text:`You know you probably shouldn't. You try it anyway.<br><br>The lock gives with no resistance at all — like it was never really locked, just waiting for you to ask.`,
+  choices:[
+    { label:"Step inside.", next:'E3' },
+    { label:"Change your mind at the last second. Shut the door.", next:'G8', setFlag:{boothTried:true} },
+  ]
+};
+
+S.G8 = {
+  id:'G8', audioLoop:'stationHall',
+  text:`Further down, a turnstile gate blocks the hall — and behind it, a kid about your age is gripping the bars, panicked.<br><br><span class="speaker">Mara:</span> "Please — it won't open, I've been stuck since the last stop, please—"`,
+  choices:[
+    { label:"Help her get free.", next:'G9', setFlag:{helpedMara:true} },
+    { label:"Tell her to wait here. You'll go find help.", next:'B6' },
+  ]
+};
+
+S.B6 = {
+  id:'B6', audioLoop:'stationHall',
+  text:`"I'll get help," you say. "Just — stay here. I'll be back."<br><br>She doesn't look like she believes you. Honestly, you're not sure you believe you either.<br><br>You keep walking. The panic in her voice fades behind you, and something about how easy that was bothers you more than the station does.`,
+  choices:[
+    { label:"Keep going. You made a choice — live with it.", next:'G10', setFlag:{helpedMara:false} },
+    { label:"Turn back. You can't actually leave her there.", next:'G9', setFlag:{helpedMara:true} },
+  ]
+};
+
+S.G9 = {
+  id:'G9', audioLoop:'alarmRise', audioStab:'alarmHit',
+  timer:{ seconds:15, defaultNext:'G10', forgiving:true },
+  text:`The gate groans and something in the wall <i>clicks</i> — a chime starts, low and rising, lights along the hallway beginning to strobe.`,
+  choices:[
+    { label:"Pull her through the gap now.", next:'G10' },
+    { label:"Grab the loose bolt and widen the gap first.", next:'G10' },
+  ]
+};
+
+S.G10 = {
+  id:'G10', audioLoop:'platform',
+  text:`You pass the vending machine again on the way back — except now the little screen above the buttons is flickering with letters. It's spelling your name.<br><br><span class="speaker">Mara:</span> "Don't stare at it too long."`,
+  choicesFn:(st)=>{
+    return [
+      { label:"Take her advice and move on.", next:'G11' },
+      { label:"One more second — just to see what it does.", next:'B_G10_extra' },
+    ];
+  }
+};
+
+S.B_G10_extra = {
+  id:'B_G10_extra', audioLoop:'platform',
+  text:`You lean in for one more look. The screen flickers your name a third time, then — <i>bloop</i> — spits out another item, no button pressed, no request made.<br><br>It's a very ordinary-looking juice box.`,
+  choices:[
+    { label:"Drink it. You're thirsty and this night has been a lot.", next:'E5' },
+    { label:"Actually — leave it. Follow Mara.", next:'G11' },
+  ]
+};
+
+S.G11 = {
+  id:'G11', checkpoint:true, audioLoop:'stationHall',
+  text:`Back near the conductor's booth, the door is different now. Not locked. Just barely open, a sliver of dark inside, like something wants you to look.`,
+  choices:[
+    { label:"Look inside.", next:'G12' },
+    { label:"Walk past it toward the platform. You're almost out.", next:'B7' },
+  ]
+};
+
+S.B7 = {
+  id:'B7', audioLoop:'stationHall',
+  text:`Whatever's behind that door, you don't want to know tonight. You keep walking.<br><br>Behind you, faint, you could swear you hear the door creak shut on its own — like it's disappointed.`,
+  choices:[
+    { label:"Keep moving toward the platform.", next:'G13', setFlag:{examinedNote:false} },
+    { label:"Actually, go back and look. You'll regret not knowing.", next:'G12' },
+  ]
+};
+
+S.G12 = {
+  id:'G12', audioLoop:'stationHall', audioStab:'boothReveal',
+  text:`Inside the booth: an old ticket stub, a photo gone soft at the corners, a note in handwriting that looks — unsettlingly — a little like Rin's.<br><br>It isn't a trap. It's a <i>warning</i>. Left by someone who didn't make it out in time.<br><br>Rin appears behind you, quieter than before. "I've been here longer than you think," she says. "I'm not doing this <i>to</i> you."`,
+  choices:[
+    { label:"Ask her what happens now.", next:'G13', setFlag:{examinedNote:true} },
+    { label:"Just nod. There isn't time for more questions.", next:'G13', setFlag:{examinedNote:false} },
+  ]
+};
+
+S.G13 = {
+  id:'G13', audioLoop:'trainArrival',
+  timer:{ seconds:10, defaultNext:'G14', forgiving:true },
+  text:`"A train's coming," Rin says. "But so is a fake one. They'll look the same. Almost."`,
+  choices:[
+    { label:"Trust her completely — board when she tells you to.", next:'G14', setFlag:{sawTell:false} },
+    { label:"Watch the platform yourself, just to be sure.", next:'B8', setFlag:{sawTell:true} },
+  ]
+};
+
+S.B8 = {
+  id:'B8', audioLoop:'trainArrival',
+  timer:{ seconds:10, defaultNext:'G14', forgiving:true },
+  text:`Two lights down the tunnel. Both trains, growing louder, closer, identical in every way you can see.`,
+  choicesFn:(st)=>{
+    if(st.flags.hasItem){
+      return [{ label:"You catch it fast — the item's second clue confirms the tell.", next:'G14' }];
+    }
+    return [
+      { label:"You think you spot it — trust your gut.", next:'G14' },
+      { label:"You can't tell. Trust Rin's earlier instructions instead.", next:'G14' },
+    ];
+  }
+};
+
+S.G14 = {
+  id:'G14', audioLoop:'trainArrival',
+  text:`Mara's beside you now, watching the tunnel too.<br><br><span class="speaker">Mara:</span> "Are you — are we going together?"`,
+  choicesFn:(st)=>{
+    if(st.flags.helpedMara === false){
+      return [{ label:"You board alone. Mara isn't here anymore.", next:'G15' }];
+    }
+    return [
+      { label:"Bring her onto the train with you.", next:'G15' },
+      { label:"Let her find her own way out.", next:'G15', setFlag:{helpedMara:false} },
+    ];
+  }
+};
+
+S.G15 = {
+  id:'G15', audioLoop:'trainArrival',
+  text:`The right train slows to a stop. The doors open with an ordinary, boring, <i>wonderful</i> hiss.<br><br>Rin doesn't move to follow.`,
+  choicesFn:(st)=>{
+    return [
+      { label:"Step on board.", next:'RESOLVE' },
+      { label:"Hesitate one more second and look back.", next:'RESOLVE' },
+    ];
+  }
+};
+
+/* ===========================================================
+   ENDINGS
+   =========================================================== */
+S.E1 = {
+  id:'E1', isEnding:true, good:true, audioLoop:null,
+  title:'Escape',
+  text:`The train rattles along like any other train. Mara falls asleep against the window within two stops. Normal. Boring. Perfect.<br><br>You get off at your actual stop. Walk home under streetlights that work exactly the way streetlights are supposed to.<br><br>In your room, you empty your pockets before bed — coins, a receipt, your key.<br><br>And one small glowing thing you don't remember buying.<br><br>You set it on your nightstand. It's still warm.<br><br>Somewhere, a station clock ticks toward 11:59 again.`
+};
+S.E9 = {
+  id:'E9', isEnding:true, good:true, audioLoop:null,
+  title:'New Member',
+  text:`Same walk home. Same streetlights. Same glowing thing on the nightstand.<br><br>Except this time, when you turn it over, there's something scratched into the underside — small, careful letters, like they were carved slowly, by someone who had all the time in the world.<br><br><b>11:59.</b><br><br>Your phone buzzes. It's not Kenji this time. It's a number you don't recognize.<br><br><span class="speaker">Unknown:</span> Welcome to the club.<br><br>You don't reply. You don't need to. Somehow, you already know you're not getting a normal night's sleep.`
+};
+S.E2 = {
+  id:'E2', isEnding:true, good:false, audioLoop:null,
+  title:'Escape, Alone',
+  text:`The train rattles along like any other train. Except the seat across from you stays empty the whole ride, and you can't stop looking at it.<br><br>You get off at your stop. Walk home. Normal streetlights, normal night.<br><br>But you keep hearing footsteps a half-step behind your own, matching your pace exactly.<br><br>In bed, you almost fall asleep — until your phone buzzes once, from an unknown number. Just a photo.<br><br>A turnstile gate. Still locked.`
+};
+S.E3 = {
+  id:'E3', isEnding:true, good:false, checkpointReturn:'G7', audioLoop:null, audioStab:'boothReveal',
+  title:'The Booth',
+  text:`The door creaks open on its own, slow, like it's been waiting for permission.<br><br>Inside isn't a booth. It's the inside of the train — your train — rows of seats stretching back further than they should, lit by a light that flickers in time with your heartbeat.<br><br>At the far end, a seat. Your seat. Someone's already sitting in it.<br><br>They turn around. It's you — from ten minutes ago, still deciding whether to answer Kenji's text.<br><br>The doors behind you seal shut.<br><br>You've done this before.`
+};
+S.E4 = {
+  id:'E4', isEnding:true, good:false, checkpointReturn:'G7', audioLoop:null, audioStab:'mapGlitch',
+  title:'Trust the Map',
+  text:`By the third turn you realize you're not walking down new hallways at all. You're walking the same twenty feet, over and over, and the map is simply relabeling itself each time you check.<br><br>Somewhere behind you, faint and almost gentle, Rin's voice: <i>"I told you not to look at it."</i><br><br>The lights go out one row at a time, moving toward you, unhurried, patient, like they have exactly as long as it takes.`
+};
+S.E5 = {
+  id:'E5', isEnding:true, good:false, funny:true, checkpointReturn:'G3', audioLoop:null,
+  title:'The Vending Machine Deal',
+  text:`It tastes fine. Great, actually. Slightly blue, somehow.<br><br>Mara stares at you. "You just drank <i>mystery station juice.</i>"<br><br>"It was FREE," you say.<br><br>You do make it home fine. Completely fine. The only side effect is that for the next three weeks, you can only taste the color blue, and every vending machine you pass hums a little when you walk by — like it recognizes you.<br><br>Small price. Ten out of ten juice box. Would drink again.`
+};
+S.E6 = {
+  id:'E6', isEnding:true, good:false, checkpointReturn:'G3', audioLoop:null,
+  title:'You Already Got Off This Train Once',
+  text:`Rin doesn't answer right away. When she finally does, her voice sounds tired in a way that has nothing to do with being sleepy.<br><br>"You always say that," she says. "Every time."<br><br>The platform light nearest you flickers out completely. When it comes back on, Rin is gone — and so is the bench, like it was never there.<br><br>You check your phone. The clock reads:<br><br><span class="clock-flash">11:58.</span><br><br>Again.`
+};
+S.E7 = {
+  id:'E7', isEnding:true, good:false, restartFull:true, audioLoop:null,
+  title:'Try Again',
+  text:`The doors close a half-second before you reach them. You catch your reflection in the glass, mouth open mid-word.<br><br>The train rolls on. Fine. You'll just get off at the next stop instead.<br><br>Except the doors don't open at the next stop either. Or the one after that.<br><br>Outside the window, the world has gone completely dark — nothing at all except your own reflection, patiently waiting for you to make a different choice.`
+};
+S.E8 = {
+  id:'E8', isEnding:true, good:false, audioLoop:null,
+  title:'The Lie Catches Up',
+  text:`The right train pulls in. Doors open with that same ordinary hiss. You step on alone.<br><br>Halfway home, your phone buzzes. Kenji, finally, hours late:<br><br><span class="speaker">Kenji:</span> hey. we ok?<br><br>You go to answer, but the message won't send. It just sits there, spinning.<br><br>Across the train car, in the very last seat, someone is sitting who wasn't there a second ago. Small. Familiar. Arms crossed, waiting by a gate that, in this light, looks a lot like a turnstile.<br><br>She doesn't say anything. She doesn't have to.<br><br>The train doesn't stop at your station. It just keeps going, into the dark, and a station clock resets to <b>11:59.</b>`
+};
+
+const ENDINGS = { E1:S.E1, E2:S.E2, E3:S.E3, E4:S.E4, E5:S.E5, E6:S.E6, E7:S.E7, E8:S.E8, E9:S.E9 };
+
+function resolveEnding(st){
+  if(st.flags.helpedMara === false && st.flags.keptPromise === false) return 'E8';
+  if(st.flags.helpedMara === false) return 'E2';
+  if(st.flags.examinedNote && st.flags.hasItem && st.flags.helpedMara && st.flags.keptPromise) return 'E9';
+  return 'E1';
+}
+
+/* ===========================================================
+   RENDER ENGINE
+   =========================================================== */
+const board = document.getElementById('board');
+let timerInterval = null;
+
+function md(text){ return text; } // scenes already use inline <b>/<i>/<span> — kept for future markdown parsing
+
+function clearTimer(){ if(timerInterval){ clearInterval(timerInterval); timerInterval = null; } }
+
+function renderStart(){
+  fadeOutLoop();
+  board.innerHTML = `
+    <div class="startwrap">
+      <div class="brand-eyebrow">The 11:59 Club — Book One</div>
+      <h1 class="brand-title">The Last Train<br>to Nowhere</h1>
+      <p class="brand-sub">A Choose-Your-Scare Adventure</p>
+      <input class="nameinput" id="nameField" placeholder="TYPE YOUR NAME" maxlength="18" autocomplete="off">
+      <br>
+      <button class="go-btn" id="startBtn">Board the Train</button>
+    </div>
+  `;
+  document.getElementById('startBtn').onclick = ()=>{
+    const val = document.getElementById('nameField').value.trim();
+    state.playerName = val || 'Rider';
+    state.currentId = 'G1';
+    renderScene('G1');
+  };
+}
+
+function renderScene(id){
+  clearTimer();
+  const scene = S[id];
+  if(!scene){ console.error('missing scene', id); return; }
+  state.currentId = id;
+
+  if(scene.onEnter) scene.onEnter(state);
+  if(SPINE_ORDER.includes(id)) state.spineVisited.add(id);
+  if(scene.checkpoint) state.checkpoint = id;
+
+  playLoop(scene.audioLoop);
+  if(scene.audioStab) playStab(scene.audioStab);
+  if(scene.cutSilence) cutSilence();
+
+  const dots = SPINE_ORDER.map(sid=>`<div class="dot ${state.spineVisited.has(sid)?'on':''}"></div>`).join('');
+
+  const choices = scene.choicesFn ? scene.choicesFn(state) : scene.choices;
+
+  board.innerHTML = `
+    <div class="topbar">
+      <span class="title">11:59 Club</span>
+      <div class="progress">${dots}</div>
+    </div>
+    ${scene.timer ? `<div class="timerwrap"><div class="timerbar" id="timerbar"></div></div>` : ''}
+    <div class="scene">
+      <p>${scene.text.replace('Kenji:','Kenji:').replaceAll('Rin:','Rin:').replaceAll('Mara:','Mara:').split('<br><br>').join('</p><p>')}</p>
+    </div>
+    <div class="choices" id="choiceWrap">
+      ${choices.map((c,i)=>`<button class="choice" data-i="${i}">${c.label.replace('Kenji','Kenji')}</button>`).join('')}
+    </div>
+  `;
+
+  choices.forEach((c,i)=>{
+    board.querySelector(`.choice[data-i="${i}"]`).onclick = ()=> handleChoice(c);
+  });
+
+  if(scene.timer){
+    startTimer(scene.timer, choices);
+  }
+}
+
+function startTimer(timerCfg, choices){
+  const bar = document.getElementById('timerbar');
+  let remaining = timerCfg.seconds;
+  const total = timerCfg.seconds;
+  bar.style.transition = `width ${total}s linear`;
+  requestAnimationFrame(()=>{ bar.style.width = '0%'; });
+
+  timerInterval = setTimeout(()=>{
+    clearTimer();
+    // timer expired — forgiving default routes to the safe next scene
+    handleChoice({ next: timerCfg.defaultNext });
+  }, total*1000);
+}
+
+function handleChoice(choice){
+  clearTimer();
+  if(choice.setFlag){
+    Object.assign(state.flags, choice.setFlag);
+  }
+  if(choice.next === 'RESOLVE'){
+    const endId = resolveEnding(state);
+    renderEnding(endId);
+    return;
+  }
+  if(ENDINGS[choice.next]){
+    renderEnding(choice.next);
+    return;
+  }
+  renderScene(choice.next);
+}
+
+function renderEnding(id){
+  clearTimer();
+  const e = ENDINGS[id];
+  playLoop(e.audioLoop);
+  if(e.audioStab) playStab(e.audioStab);
+
+  let tagClass = 'end-tag';
+  if(e.good) tagClass += ' good';
+
+  board.innerHTML = `
+    <div class="topbar">
+      <span class="title">11:59 Club</span>
+      <span>${state.playerName}</span>
+    </div>
+    <div class="endwrap">
+      <p style="text-align:left; line-height:1.65; font-size:17px;">${e.text.split('<br><br>').join('</p><p style="text-align:left;line-height:1.65;font-size:17px;">')}</p>
+      <div class="${tagClass}">— ${e.title} —</div>
+      <div class="actionrow">
+        <button class="go-btn" id="againBtn">Play Again</button>
+        <button class="ghost-btn" id="restartBtn">Back to Start</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('restartBtn').onclick = ()=> {
+    resetState();
+    renderStart();
+  };
+  document.getElementById('againBtn').onclick = ()=> {
+    if(e.restartFull){
+      resetState();
+      renderScene('G1');
+      return;
+    }
+    const target = e.checkpointReturn || state.checkpoint || 'G1';
+    renderScene(target);
+  };
+}
+
+function resetState(){
+  state.flags = { keptPromise:null, hasItem:false, helpedMara:null, sawTell:null, examinedNote:false, boothTried:false };
+  state.counters = { mapLoop:0, stairLoop:0, missedWindow:0 };
+  state.checkpoint = 'G1';
+  state.spineVisited = new Set();
+}
+
+renderStart();
+</script>
+
+</body>
+</html>

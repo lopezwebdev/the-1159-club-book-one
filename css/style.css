@@ -1,0 +1,835 @@
+/* ===========================================================
+   THE 11:59 CLUB — BOOK ONE: THE LAST TRAIN TO NOWHERE
+   Standalone Cover 1 Opening & Paperback Reading Interface
+   =========================================================== */
+
+:root {
+  /* Paperback Reading Page Palette */
+  --page-bg: #f4efe6;
+  --page-panel: #f7f3eb;
+  --page-header: #eae3d5;
+  --page-border: #d8cfbe;
+  --page-border-subtle: #e5dcce;
+
+  /* Ink & Accents */
+  --ink: #201f1d;
+  --ink-muted: #6e6960;
+  --amber: #d98e26;
+  --amber-hover: #e59a30;
+  --amber-dim: #f3e6cf;
+  --teal: #237f70;
+  --rust: #b3452f;
+  --rust-glow: rgba(179, 69, 47, 0.25);
+
+  /* Dark Opening Cover Tokens */
+  --cover-dark-bg: #0b0c10;
+  --cover-panel-bg: #14161d;
+  --cover-edge: #232733;
+
+  /* Book Dimensions: Fixed 2:3 Portrait Aspect Ratio */
+  --book-aspect: 2 / 3;
+  --book-max-width: 480px;
+  --border-radius: 8px;
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  height: 100%;
+}
+
+/* Full-Screen Dark Background Outside Reading Window (Using Cover 2) */
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: #08090c;
+  background-image: url('Last%20Train%20to%20Nowhere%20Cover%202.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--font-body);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  position: relative;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Darkened / Blurred Atmosphere Outside the Reading Window */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg,
+      rgba(8, 9, 13, 0.78) 0%,
+      rgba(5, 6, 9, 0.72) 50%,
+      rgba(8, 9, 13, 0.82) 100%);
+  backdrop-filter: blur(4px) brightness(0.7);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* CRT scanline overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(180deg,
+      rgba(0, 0, 0, 0.03) 0px,
+      rgba(0, 0, 0, 0.03) 1px,
+      transparent 1px,
+      transparent 3px);
+  pointer-events: none;
+  z-index: 11;
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber) !important;
+  outline-offset: 2px !important;
+}
+
+/* Fixed 2:3 Portrait Reading Window Outer Container */
+.stage {
+  position: relative;
+  z-index: 20;
+  width: min(100%, calc((100vh - 32px) * (2 / 3)));
+  max-width: var(--book-max-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Clock Bar */
+.header-clock-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--page-header);
+  border: 1px solid var(--page-border);
+  border-bottom: none;
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
+  padding: 8px 14px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 30;
+  box-shadow: inset 0 -1px 0 var(--page-border-subtle);
+}
+
+.clock-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clock-icon {
+  width: 16px;
+  height: 16px;
+  fill: #e8a33d;
+}
+
+.clock-brand-title {
+  font-family: var(--font-sign);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  font-weight: bold;
+}
+
+.digital-clock {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: bold;
+  color: var(--rust);
+  background: #f7f2e8;
+  border: 1px solid var(--page-border);
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.12em;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.clock-dots {
+  animation: clockBlink 1.2s infinite steps(1);
+}
+
+@keyframes clockBlink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-btn {
+  background: #f7f3eb;
+  border: 1px solid var(--page-border);
+  color: var(--ink);
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-family: var(--font-sign);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.icon-btn:hover {
+  border-color: var(--amber);
+  color: #c67f1b;
+  background: var(--amber-dim);
+}
+
+.icon-btn svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+}
+
+/* Centered Portrait Reading Window */
+.board {
+  background-color: var(--page-bg);
+  border: 1px solid var(--page-border);
+  border-bottom-left-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.8),
+    0 2px 10px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: var(--book-aspect);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.board.glitch {
+  animation: glitchShake 0.28s steps(2, end) 2;
+}
+
+@keyframes glitchShake {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(-3px, 1px);
+  }
+
+  50% {
+    transform: translate(3px, -1px);
+  }
+
+  75% {
+    transform: translate(-1px, 2px);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* Top Navigation Bar inside Book Frame */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--page-header);
+  border-bottom: 1px solid var(--page-border);
+  font-family: var(--font-sign);
+  letter-spacing: 0.14em;
+  font-size: 11px;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.topbar .title {
+  color: #c67f1b;
+  font-weight: bold;
+}
+
+.progress {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #c8bfae;
+  transition: background var(--transition-normal);
+}
+
+.dot.on {
+  background: var(--amber);
+  box-shadow: 0 0 4px rgba(217, 142, 38, 0.4);
+}
+
+.dot.checkpoint {
+  border: 1px solid var(--amber);
+}
+
+/* Timer Bar */
+.timerwrap {
+  height: 4px;
+  background: var(--page-border-subtle);
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.timerbar {
+  height: 100%;
+  background: var(--rust);
+  width: 100%;
+  transform-origin: left;
+}
+
+/* Cover 1 Opening Screen: Cover image fills the view window with buttons overlaying at the bottom */
+.cover-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  z-index: 10;
+  overflow: hidden;
+  background: var(--cover-dark-bg);
+}
+
+.cover-image-container {
+  flex: 1 1 auto;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(11,12,16,0.1) 0%, rgba(11,12,16,0.45) 60%, rgba(11,12,16,0.95) 100%);
+  pointer-events: none;
+}
+
+/* Translucent Controls Overlay Matching Reference Image (Full Width & Positioned Above Title) */
+.cover-controls-panel {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 36px);
+  max-width: 420px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  text-align: center;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.cover-controls-panel .input-group {
+  width: 100%;
+  margin: 0;
+}
+
+.nameinput {
+  width: 100%;
+  background: rgba(5, 6, 9, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #e8e4db;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  padding: 13px 16px;
+  border-radius: 4px;
+  text-align: center;
+  letter-spacing: 0.08em;
+  transition: border-color var(--transition-fast);
+  backdrop-filter: blur(2px);
+}
+
+.nameinput::placeholder {
+  color: #8b8e9b;
+}
+
+.nameinput:focus {
+  border-color: #e8a33d;
+  background: rgba(5, 6, 9, 0.88);
+  outline: none;
+}
+
+.go-btn {
+  background: #e8a33d;
+  color: #0b0c10;
+  border: none;
+  font-family: var(--font-sign);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 14px;
+  padding: 12px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  min-height: 44px;
+  width: 100%;
+  box-shadow: 0 4px 14px rgba(232, 163, 61, 0.35);
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.go-btn:hover {
+  background: #f3b558;
+  transform: translateY(-1px);
+}
+
+.go-btn:active {
+  transform: translateY(1px);
+}
+
+/* Story Scene Content Area (Warm Cream Paper & Dark Ink) */
+.scene {
+  padding: 24px 22px 18px;
+  line-height: 1.7;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  position: relative;
+  z-index: 10;
+  background-color: var(--page-bg);
+  scrollbar-width: thin;
+  scrollbar-color: var(--page-border) transparent;
+}
+
+.scene::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scene::-webkit-scrollbar-thumb {
+  background: var(--page-border);
+  border-radius: 2px;
+}
+
+.scene p {
+  margin: 0 0 14px;
+  font-size: 1.04rem;
+  color: var(--ink);
+}
+
+.scene p:last-of-type {
+  margin-bottom: 0;
+}
+
+.scene b {
+  color: #c67f1b;
+  font-weight: bold;
+}
+
+.scene i {
+  color: var(--ink);
+  font-style: italic;
+}
+
+.speaker {
+  font-family: var(--font-sign);
+  letter-spacing: 0.08em;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.clock-flash {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--rust);
+  font-weight: bold;
+  letter-spacing: 0.08em;
+}
+
+/* Choices Area at bottom of Paperback Page */
+.choices {
+  border-top: 1px solid var(--page-border);
+  background: var(--page-header);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.choice {
+  display: flex;
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--page-border-subtle);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.96rem;
+  padding: 14px 18px;
+  cursor: pointer;
+  position: relative;
+  min-height: 48px;
+  transition: background var(--transition-fast), padding-left var(--transition-fast);
+}
+
+.choice:last-child {
+  border-bottom: none;
+}
+
+.choice-key {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #c67f1b;
+  border: 1px solid var(--page-border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-right: 10px;
+  background: #f8f4ec;
+  flex-shrink: 0;
+}
+
+.choice-text {
+  flex-grow: 1;
+  line-height: 1.4;
+}
+
+.choice:hover {
+  background: var(--amber-dim);
+  padding-left: 22px;
+}
+
+.choice:focus-visible {
+  background: var(--amber-dim);
+  padding-left: 22px;
+  box-shadow: inset 4px 0 0 #c67f1b;
+}
+
+/* Endings Layout inside Paperback Page */
+.endwrap {
+  padding: 22px 20px;
+  text-align: center;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  z-index: 10;
+  background-color: var(--page-bg);
+}
+
+.end-tag {
+  font-family: var(--font-sign);
+  letter-spacing: 0.18em;
+  color: var(--rust);
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: bold;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.end-tag.good {
+  color: var(--teal);
+}
+
+.unlock-toast {
+  background: #e1f2ef;
+  border: 1px solid var(--teal);
+  color: var(--teal);
+  font-family: var(--font-sign);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  display: inline-block;
+  box-shadow: 0 2px 6px rgba(35, 127, 112, 0.15);
+}
+
+.actionrow {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  margin-top: 12px;
+}
+
+.ghost-btn {
+  background: var(--page-bg);
+  border: 1px solid var(--page-border);
+  color: var(--ink);
+  font-family: var(--font-sign);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 11px;
+  padding: 10px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  min-height: 44px;
+  transition: all var(--transition-fast);
+}
+
+.ghost-btn:hover {
+  color: var(--ink);
+  border-color: #c67f1b;
+  background: var(--amber-dim);
+}
+
+.footer-note {
+  text-align: center;
+  font-family: var(--font-sign);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: #7d786f;
+  text-transform: uppercase;
+  margin-top: 10px;
+  flex-shrink: 0;
+}
+
+/* Modal Gallery for Endings Tracker (Paperback Style) */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-normal);
+}
+
+.modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background: var(--page-bg);
+  border: 1px solid var(--page-border);
+  border-radius: var(--border-radius);
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  transform: translateY(12px);
+  transition: transform var(--transition-normal);
+}
+
+.modal-backdrop.open .modal-content {
+  transform: translateY(0);
+}
+
+.modal-header {
+  padding: 14px 18px;
+  background: var(--page-header);
+  border-bottom: 1px solid var(--page-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-family: var(--font-sign);
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  color: #c67f1b;
+  text-transform: uppercase;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.modal-close:hover {
+  color: var(--ink);
+}
+
+.modal-body {
+  padding: 14px 18px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.endings-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.ending-card {
+  background: #fcf9f2;
+  border: 1px solid var(--page-border-subtle);
+  border-radius: 4px;
+  padding: 12px 14px;
+}
+
+.ending-card.unlocked {
+  border-color: #c67f1b;
+  background: #fffdf9;
+}
+
+.ending-card.good.unlocked {
+  border-color: var(--teal);
+  background: #f7fcfb;
+}
+
+.ending-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.ending-code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--ink-muted);
+}
+
+.ending-card.unlocked .ending-code {
+  color: #c67f1b;
+}
+
+.ending-card.good.unlocked .ending-code {
+  color: var(--teal);
+}
+
+.ending-name {
+  font-family: var(--font-sign);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-weight: bold;
+}
+
+.ending-card.locked .ending-name {
+  color: var(--ink-muted);
+  font-weight: normal;
+}
+
+.ending-hint {
+  font-size: 12px;
+  color: var(--ink-muted);
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.ending-card.unlocked .ending-hint {
+  color: var(--ink);
+}
+
+/* Reduced Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+  .board.glitch {
+    animation: none;
+  }
+
+  .clock-dots {
+    animation: none;
+  }
+
+  .timerbar {
+    transition: none !important;
+  }
+
+  .modal-backdrop,
+  .modal-content,
+  .choice,
+  .icon-btn,
+  .go-btn {
+    transition: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 6px;
+  }
+
+  .stage {
+    width: 100%;
+  }
+
+  .scene {
+    padding: 16px 14px 12px;
+  }
+
+  .scene p {
+    font-size: 0.95rem;
+  }
+
+  .choice {
+    padding: 12px 14px;
+    font-size: 0.9rem;
+  }
+}

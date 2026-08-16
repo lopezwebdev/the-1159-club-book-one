@@ -1,0 +1,7 @@
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Archives & Temporary Data
+*.zip
+ scratch/
