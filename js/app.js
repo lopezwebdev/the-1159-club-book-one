@@ -943,6 +943,16 @@
       };
     }
 
+    document.addEventListener('pointerdown', () => {
+      if (!audioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) audioCtx = new AudioCtx();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }, { once: true });
+
     initVisitorTracker();
     renderStart();
   });
