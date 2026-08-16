@@ -5,3 +5,6 @@ Thumbs.db
 # Archives & Temporary Data
 *.zip
  scratch/
+
+# Local Netlify folder
+.netlify
