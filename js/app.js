@@ -95,6 +95,32 @@
     }
   }
 
+  /* ===========================================================
+     HAPTIC VIBRATION ENGINE (HTML5 Web Vibration API)
+     =========================================================== */
+  function triggerHaptic(patternType) {
+    if (!('vibrate' in navigator)) return;
+    try {
+      switch (patternType) {
+        case 'tap':
+          navigator.vibrate(30);
+          break;
+        case 'stab':
+          navigator.vibrate([70, 40, 120]);
+          break;
+        case 'timer':
+          navigator.vibrate([40, 100, 40, 100, 60]);
+          break;
+        case 'ending-good':
+          navigator.vibrate([100, 50, 150]);
+          break;
+        case 'ending-bad':
+          navigator.vibrate([150, 60, 200, 60, 350]);
+          break;
+      }
+    } catch (e) {}
+  }
+
   function playStab(key) {
     const src = AUDIO_STABS[key];
     if (src && stabEl && !isMuted) {
@@ -105,6 +131,8 @@
         stabEl.play().catch(() => {});
       } catch (e) {}
     }
+
+    triggerHaptic('stab');
 
     const board = document.getElementById('board');
     if (board && window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
@@ -680,6 +708,8 @@
     bar.style.transition = `width ${total}s linear`;
     requestAnimationFrame(() => { bar.style.width = '0%'; });
 
+    triggerHaptic('timer');
+
     timerTimeout = setTimeout(() => {
       clearTimer();
       handleChoice({ next: timerCfg.defaultNext });
@@ -688,6 +718,7 @@
 
   function handleChoice(choice) {
     clearTimer();
+    triggerHaptic('tap');
     if (choice.setFlag) {
       Object.assign(state.flags, choice.setFlag);
     }
@@ -712,7 +743,11 @@
     updateTrackerButton();
 
     playLoop(e.audioLoop);
-    if (e.audioStab) playStab(e.audioStab);
+    if (e.audioStab) {
+      playStab(e.audioStab);
+    } else {
+      triggerHaptic(e.good ? 'ending-good' : 'ending-bad');
+    }
 
     let tagClass = 'end-tag';
     if (e.good) tagClass += ' good';
